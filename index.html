@@ -56,7 +56,17 @@ textarea{min-height:200px;font-family:ui-monospace,Consolas,monospace;font-size:
 .btn:active{transform:scale(.97)}
 .btn:disabled{opacity:.55;cursor:wait}
 .btn.sm{display:inline-block;width:auto;padding:7px 13px;font-size:12px;margin:0;border-radius:12px;color:var(--ink);background:var(--white);box-shadow:var(--clay-sm)}
-#l-share,#l-copy{background:linear-gradient(160deg,#3c3f46,#2e3136 48%,#26282d)!important;color:#fff!important;border:1px solid rgba(255,255,255,.08)!important;box-shadow:var(--glass-shadow)!important}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.mem{min-width:0;padding:10px 12px;border-radius:14px;background:var(--white);box-shadow:var(--clay-sm)}
+.mem b{display:block;font-size:13px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mem i{display:flex;align-items:center;gap:5px;margin-top:3px;font-style:normal;font-size:11px;font-weight:700;white-space:nowrap}
+.mem i::before{content:'';flex:none;width:7px;height:7px;border-radius:50%;background:currentColor}
+.k-ok i{color:var(--green)}.k-bad i{color:var(--red)}.k-part i{color:var(--red)}.k-part i::before{background:none;box-shadow:inset 0 0 0 2px currentColor}
+.k-warn i{color:#b26a00}.k-off i{color:var(--mute)}
+#l-wa,#s-wa{display:flex;align-items:center;justify-content:center;gap:9px;background:linear-gradient(160deg,#2bc365,#1aa251);box-shadow:0 8px 18px -8px rgba(26,162,81,.7),inset 0 2px 0 rgba(255,255,255,.25)}
+#l-wa svg,#s-wa svg{width:20px;height:20px;fill:none;stroke:#fff;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.shr{width:100%;max-width:440px}.shr img{width:100%;margin-top:18px;border-radius:18px;box-shadow:var(--clay);display:block}
+#l-share,#l-copy,#s-dl{background:linear-gradient(160deg,#3c3f46,#2e3136 48%,#26282d)!important;color:#fff!important;border:1px solid rgba(255,255,255,.08)!important;box-shadow:var(--glass-shadow)!important}
 .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
 .chips button{border:0;background:var(--white);border-radius:12px;padding:8px 13px;font:inherit;font-size:13px;font-weight:700;color:var(--ink);cursor:pointer;box-shadow:var(--clay-sm)}
 .chips button:active{box-shadow:var(--clay-in)}
@@ -92,7 +102,7 @@ nav button.on{color:#fff;background:var(--red);box-shadow:var(--clay-red)}
     <div class="stat"><span>Masuk Bulan Ini</span><b id="d-masuk"></b></div>
     <div class="stat"><span>Lunas Bulan Ini</span><b id="d-lunas"></b><div class="bar"><i id="d-bar"></i></div></div>
   </div>
-  <div class="card"><h2 id="d-title"></h2><div id="d-list"></div></div>
+  <div class="card"><h2 id="d-title"></h2><div id="d-list" class="grid2"></div></div>
 </section>
 
 <section class="page" id="p-input">
@@ -131,9 +141,8 @@ nav button.on{color:#fff;background:var(--red);box-shadow:var(--clay-red)}
     <h2>Laporan untuk Grup WA</h2>
     <label>Periode</label><select id="l-per"></select>
     <img id="l-img" alt="Laporan kas" style="width:100%;margin-top:12px;border:1px solid var(--line);border-radius:8px;display:block">
-    <div class="note">Di HP: tekan lama gambar → Simpan / Bagikan ke WhatsApp.</div>
-    <button class="btn" id="l-tg" style="display:none">Kirim Gambar ke Chat Telegram</button>
-    <button class="btn" id="l-share">Bagikan / Simpan Gambar</button>
+    <button class="btn" id="l-wa"><svg viewBox="0 0 24 24"><path d="M3.5 20.5l1.3-4.2A8.5 8.5 0 1 1 8 19.4z"/><path d="M9 8.6c0 3.4 2.9 6.4 6.4 6.4l1.1-1.3-1.9-1-1 .8a5 5 0 0 1-2.5-2.5l.8-1-1-1.9z"/></svg>Bagikan ke Grup WhatsApp</button>
+    <button class="btn" id="l-share">Simpan Gambar</button>
   </div>
   <div class="card">
     <h2>Versi Teks</h2>
@@ -251,7 +260,7 @@ function renderDash() {
   $('#d-title').textContent = 'Status ' + perLabel(curPer, true) + ' · iuran ' + rp(iuranOf(curPer));
   const order = { bad: 0, part: 1, warn: 2, ok: 3, off: 4 };
   $('#d-list').innerHTML = st.sort((x, y) => order[x.s.k] - order[y.s.k]).map(({ a, s }) =>
-    `<div class="row"><div>${esc(a.nama)}<small>${esc(a.usaha)} · ${esc(a.kota)}</small></div><span class="tag t-${s.k}">${s.t}</span></div>`).join('') || '<small>Belum ada anggota aktif</small>';
+    `<div class="mem k-${s.k}" title="${esc(a.usaha)}"><b>${esc(a.nama)}</b><i>${s.t}</i></div>`).join('') || '<small>Belum ada anggota aktif</small>';
 }
 function renderInput() {
   const sel = $('#f-ang'), keep = sel.value;
@@ -480,24 +489,59 @@ $('#l-copy').onclick = () => {
   if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t.value).then(() => toast('Teks tersalin, tempel di grup WA'), fallback);
   else fallback();
 };
-$('#l-share').onclick = async () => {
-  const url = $('#l-img').src, name = 'Laporan-Kas-' + $('#l-per').value + '.png';
+/* ===== BAGIKAN GAMBAR ===== */
+function fileDari(url, name) {
+  const b = atob(url.split(',')[1]), u = new Uint8Array(b.length);
+  for (let i = 0; i < b.length; i++) u[i] = b.charCodeAt(i);
+  return new File([u], name, { type: 'image/png' });
+}
+async function shareFile(url, name) {
   try {
-    const blob = await (await fetch(url)).blob();
-    const file = new File([blob], name, { type: 'image/png' });
-    if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file] }); return; }
-  } catch (e) { if (e && e.name === 'AbortError') return; }
+    const f = fileDari(url, name);
+    if (!navigator.canShare || !navigator.canShare({ files: [f] })) return false;
+    await navigator.share({ files: [f] });
+  } catch (e) { if (!e || e.name !== 'AbortError') return false; }
+  return true;
+}
+function unduh(url, name) {
   const a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
-  toast('Kalau tidak terunduh, tekan lama gambar → Simpan');
+}
+function waFallback(url, name, cap) {
+  unduh(url, name);
+  window.open('https://wa.me/?text=' + encodeURIComponent(cap), '_blank');
+  toast('Gambar tersimpan, lampirkan di grup WhatsApp');
+}
+const namaFile = () => 'Laporan-Kas-' + $('#l-per').value + '.png';
+const capLap = () => 'Laporan Kas ' + perLabel($('#l-per').value, true);
+$('#l-wa').onclick = async e => {
+  const btn = e.currentTarget, url = $('#l-img').src, name = namaFile();
+  if (await shareFile(url, name)) return;
+  const W = window.Telegram && window.Telegram.WebApp;
+  if (TG && W && W.openLink) {
+    // WebView Telegram Android belum bisa share file: buka lewat browser HP
+    btn.disabled = true;
+    google.script.run
+      .withSuccessHandler(r => { btn.disabled = false; W.openLink(r.url.split('#')[0] + '#share=' + r.token); })
+      .withFailureHandler(err => { btn.disabled = false; toast(err.message || String(err), true); })
+      .simpanBagikan({ img: url, name, cap: capLap() }, TG);
+    return;
+  }
+  waFallback(url, name, capLap());
 };
-$('#l-tg').onclick = e => {
-  const btn = e.target; btn.disabled = true;
-  const per = $('#l-per').value;
+$('#l-share').onclick = () => { unduh($('#l-img').src, namaFile()); toast('Kalau tidak terunduh, tekan lama gambar → Simpan'); };
+function modeBagikan(token) {
+  $('#load-msg').textContent = 'Menyiapkan gambar…';
   google.script.run
-    .withSuccessHandler(() => { btn.disabled = false; toast('Gambar terkirim ke chat Telegram'); })
-    .withFailureHandler(err => { btn.disabled = false; toast(err.message || String(err), true); })
-    .kirimLaporanTelegram({ img: $('#l-img').src, per, label: perLabel(per, true) }, TG);
-};
+    .withSuccessHandler(r => {
+      const box = $('#loading');
+      box.innerHTML = `<div class="shr"><button class="btn" id="s-wa"><svg viewBox="0 0 24 24"><path d="M3.5 20.5l1.3-4.2A8.5 8.5 0 1 1 8 19.4z"/><path d="M9 8.6c0 3.4 2.9 6.4 6.4 6.4l1.1-1.3-1.9-1-1 .8a5 5 0 0 1-2.5-2.5l.8-1-1-1.9z"/></svg>Bagikan ke Grup WhatsApp</button><button class="btn" id="s-dl">Simpan Gambar</button><img alt="Laporan kas" src="${r.img}"></div>`;
+      box.style.overflowY = 'auto'; box.style.justifyContent = 'flex-start';
+      $('#s-wa').onclick = async () => { if (!(await shareFile(r.img, r.name))) waFallback(r.img, r.name, r.cap); };
+      $('#s-dl').onclick = () => unduh(r.img, r.name);
+    })
+    .withFailureHandler(e => { $('.spin').remove(); $('#load-msg').textContent = e.message || String(e); })
+    .ambilBagikan(token);
+}
 $('#l-per').onchange = renderLap;
 $('#f-ang').onchange = previewAlok;
 $('#f-nom').oninput = previewAlok;
@@ -528,11 +572,9 @@ function ambilInitData(h) {
   if (!/[=&]/.test(v)) { try { v = decodeURIComponent(v); } catch (e) {} }
   return v;
 }
-google.script.url.getLocation(loc => {
-  TG = ambilInitData(loc.hash);
-  if (TG) $('#l-tg').style.display = '';
-  load();
-});
+const SHARE = (location.hash.match(/^#share=([a-f0-9]{32})$/) || [])[1];
+if (SHARE) modeBagikan(SHARE);
+else google.script.url.getLocation(loc => { TG = ambilInitData(loc.hash); load(); });
 </script>
 </body>
 </html>
